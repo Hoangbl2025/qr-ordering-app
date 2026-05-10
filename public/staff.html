@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Màn Hình Pha Chế / Nhà Bếp</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body style="align-items: flex-start; padding-top: 40px;">
+    <div class="container staff-container">
+        <header>
+            <h1>Hệ Thống Nhận Đơn</h1>
+            <p class="subtitle">Dành cho bộ phận Pha Chế / Nhà Bếp</p>
+        </header>
+
+        <div class="order-list" id="order-list">
+            <!-- Đơn hàng sẽ được render ở đây -->
+            <div style="text-align: center; color: #999; padding: 40px;">
+                Chưa có đơn hàng nào.
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+    
+    <!-- Audio element for notification -->
+    <audio id="notification-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
+    <script src="staff.js"></script>
+</body>
+</html>
