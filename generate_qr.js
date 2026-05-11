@@ -2,9 +2,8 @@ const QRCode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
 
-// Địa chỉ IP hiện tại của máy tính
-const ipAddress = '192.168.1.11';
-const port = 3000;
+// Tên miền chính thức của ứng dụng
+const baseUrl = 'https://menu.daotaoaibanhang.com';
 const numberOfTables = 10;
 
 const outputDir = path.join(__dirname, 'qrcodes');
@@ -20,7 +19,7 @@ const generateQRCodes = async () => {
     for (let i = 1; i <= numberOfTables; i++) {
         // Format số bàn thành dạng 01, 02...
         const tableNum = i.toString().padStart(2, '0');
-        const url = `http://${ipAddress}:${port}/?table=${tableNum}`;
+        const url = `${baseUrl}/?table=${tableNum}`;
         const fileName = path.join(outputDir, `Ban_${tableNum}.png`);
 
         try {
