@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
       // Lấy socketId MỚI NHẤT của khách hàng từ máy chủ
       const currentSocketId = currentOrders[orderIndex].customerSocketId;
 
-      io.to(currentSocketId).emit('order-status-updated', {
+      io.to(currentSocketId).emit('order-status-changed', {
         orderId: data.orderId,
         status: data.status,
         deliveryTime: data.deliveryTime
