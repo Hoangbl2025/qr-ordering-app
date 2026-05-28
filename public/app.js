@@ -8,18 +8,20 @@ const formattedCustomerName = `Giấy Thanh Hà - ${customerCode}`;
 
 document.getElementById('table-display').innerText = formattedCustomerName;
 
-// Khôi phục đơn hàng đang hoạt động (nếu có)
-fetch(`/api/active-order/${customerCode}`)
-    .then(res => res.json())
-    .then(data => {
-        if (data.success && data.order) {
-            currentOrderTotal = data.order.total;
-            showStatusOverlay(data.order.status, data.order.deliveryTime);
-            // Thông báo cho máy chủ cập nhật lại kết nối (Socket ID) cho đơn hàng này
-            socket.emit('register-customer', customerCode);
-        }
-    })
-    .catch(err => console.error('Lỗi khi khôi phục đơn hàng:', err));
+// Khôi phục đơn hàng đang hoạt động mỗi khi kết nối lại mạng hoặc load trang
+socket.on('connect', () => {
+    fetch(`/api/active-order/${customerCode}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.order) {
+                currentOrderTotal = data.order.total;
+                showStatusOverlay(data.order.status, data.order.deliveryTime);
+                // Thông báo cho máy chủ cập nhật lại kết nối (Socket ID) cho đơn hàng này
+                socket.emit('register-customer', customerCode);
+            }
+        })
+        .catch(err => console.error('Lỗi khi khôi phục đơn hàng:', err));
+});
 
 // Danh sách 20 sản phẩm thực tế từ bảng báo giá Giấy Thanh Hà
 const menuData = [
