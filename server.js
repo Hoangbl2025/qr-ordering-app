@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
     const enrichedOrderData = {
       ...orderData,
       id: generateOrderId(),
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
       status: 'pending', // pending, preparing, done
       customerName: cInfo.name,
       customerAddress: cInfo.address,
