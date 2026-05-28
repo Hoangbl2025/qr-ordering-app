@@ -3,8 +3,19 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const axios = require('axios');
+const fs = require('fs');
 
 const GOOGLE_SHEET_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxEUUob8FlRZuV35wUSkwpo1s7-YFovIJxQbZEZPEP-ZmZW7ok1YO8KPECEjGlSkO1kUA/exec';
+
+// Đọc danh sách khách hàng từ file
+let customersData = {};
+try {
+  const rawData = fs.readFileSync(path.join(__dirname, 'customers.json'));
+  customersData = JSON.parse(rawData);
+  console.log(`Đã tải thành công CSDL gồm ${Object.keys(customersData).length} khách hàng.`);
+} catch (e) {
+  console.error("Không thể đọc file customers.json", e);
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -18,6 +29,10 @@ app.use(express.json()); // Để server có thể đọc JSON body
 
 // Biến lưu trữ đơn hàng tạm thời trong bộ nhớ server
 let currentOrders = [];
+
+function generateOrderId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
 
 // API lấy danh sách đơn hàng hiện tại
 app.get('/api/orders', (req, res) => {
@@ -39,13 +54,17 @@ io.on('connection', (socket) => {
   socket.on('send-order', (orderData) => {
     console.log('Đơn hàng mới:', orderData);
     
-    // Gán ID đơn hàng duy nhất để dễ quản lý
-    const orderId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    // Tự động tra cứu tên và địa chỉ từ CSDL dựa trên customerCode
+    const cCode = orderData.customerCode || 'UNKNOWN';
+    const cInfo = customersData[cCode] || { name: 'Đại lý mới / Chưa có tên', address: 'Chưa cập nhật địa chỉ' };
+
     const enrichedOrderData = {
       ...orderData,
-      id: orderId,
+      id: generateOrderId(),
       timestamp: new Date().toLocaleTimeString(),
-      status: 'pending' // pending, preparing, done
+      status: 'pending', // pending, preparing, done
+      customerName: cInfo.name,
+      customerAddress: cInfo.address
     };
 
     // Lưu vào bộ nhớ tạm
@@ -56,6 +75,8 @@ io.on('connection', (socket) => {
     const sheetData = {
       orderId: enrichedOrderData.id,
       tableName: enrichedOrderData.tableName,
+      customerName: enrichedOrderData.customerName,
+      customerAddress: enrichedOrderData.customerAddress,
       itemsString: itemsString,
       total: enrichedOrderData.total,
       timestamp: enrichedOrderData.timestamp,
@@ -70,15 +91,18 @@ io.on('connection', (socket) => {
     io.to('barista-room').emit('receive-new-order', enrichedOrderData);
   });
 
-  // 3. Lắng nghe cập nhật trạng thái từ Pha chế
+  // 3. Lắng nghe cập nhật trạng thái từ Sale
   socket.on('update-status', (statusUpdate) => {
-    // statusUpdate = { customerSocketId, orderId, status }
+    // statusUpdate = { customerSocketId, orderId, status, deliveryTime }
     console.log('Cập nhật trạng thái:', statusUpdate);
     
-    // Cập nhật trạng thái trong mảng lưu trữ
+    // Cập nhật trạng thái và thời gian giao trong mảng lưu trữ
     const orderIndex = currentOrders.findIndex(o => o.id === statusUpdate.orderId);
     if (orderIndex > -1) {
       currentOrders[orderIndex].status = statusUpdate.status;
+      if (statusUpdate.deliveryTime) {
+        currentOrders[orderIndex].deliveryTime = statusUpdate.deliveryTime;
+      }
     }
 
     // Gửi thông báo lại cho khách hàng cụ thể dựa trên Socket ID

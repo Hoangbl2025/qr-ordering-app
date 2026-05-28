@@ -4,28 +4,9 @@ const socket = io();
 const urlParams = new URLSearchParams(window.location.search);
 const customerCode = urlParams.get('code') || urlParams.get('table') || 'KH01';
 
-// Lấy tham số tên và địa chỉ điền sẵn (nếu có)
-const prefillName = urlParams.get('name');
-const prefillAddress = urlParams.get('address');
-
-const formattedCustomerName = `Mã Khách: ${customerCode}`;
+const formattedCustomerName = `Giấy Thanh Hà - ${customerCode}`;
 
 document.getElementById('table-display').innerText = formattedCustomerName;
-
-// Load thông tin từ localStorage HOẶC từ URL (Ưu tiên URL đè lên)
-const savedName = prefillName || localStorage.getItem('thanhha_customer_name') || '';
-const savedAddress = prefillAddress || localStorage.getItem('thanhha_customer_address') || '';
-
-if (document.getElementById('customer-name')) {
-    document.getElementById('customer-name').value = savedName;
-}
-if (document.getElementById('customer-address')) {
-    document.getElementById('customer-address').value = savedAddress;
-}
-
-// Nếu URL có truyền tham số, tự động lưu luôn vào máy khách hàng
-if (prefillName) localStorage.setItem('thanhha_customer_name', prefillName);
-if (prefillAddress) localStorage.setItem('thanhha_customer_address', prefillAddress);
 
 // Danh sách 20 sản phẩm thực tế từ bảng báo giá Giấy Thanh Hà
 const menuData = [
@@ -132,31 +113,6 @@ const updateCartSummary = () => {
 
 // Gửi đơn hàng
 document.getElementById('checkout-btn').addEventListener('click', () => {
-    const customerNameInput = document.getElementById('customer-name').value.trim();
-    const customerAddressInput = document.getElementById('customer-address').value.trim();
-
-    if (!customerNameInput || !customerAddressInput) {
-        showToast('⚠️ Vui lòng nhập Tên Đại Lý và Địa chỉ giao hàng trước khi đặt!');
-        
-        // Cuộn lên form nhập liệu
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Đổi màu viền để nhắc nhở
-        if (!customerNameInput) document.getElementById('customer-name').style.borderColor = 'red';
-        if (!customerAddressInput) document.getElementById('customer-address').style.borderColor = 'red';
-        
-        // Trả lại màu viền sau 3s
-        setTimeout(() => {
-            document.getElementById('customer-name').style.borderColor = '#dfe4ea';
-            document.getElementById('customer-address').style.borderColor = '#dfe4ea';
-        }, 3000);
-        return;
-    }
-
-    // Lưu lại thông tin cho lần sau
-    localStorage.setItem('thanhha_customer_name', customerNameInput);
-    localStorage.setItem('thanhha_customer_address', customerAddressInput);
-
     const items = [];
     let total = 0;
 
@@ -171,8 +127,7 @@ document.getElementById('checkout-btn').addEventListener('click', () => {
 
     const orderData = {
         tableName: formattedCustomerName,
-        customerName: customerNameInput,
-        customerAddress: customerAddressInput,
+        customerCode: customerCode,
         items: items,
         total: total,
         customerSocketId: socket.id 
