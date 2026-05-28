@@ -67,6 +67,14 @@ const renderOrders = () => {
                     <span style="font-size: 0.8rem; color: #666; margin-left: 10px;">${order.timestamp}</span>
                 </div>
             </div>
+            
+            <div class="customer-info-card" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--primary-color);">
+                <div style="font-weight: 700; color: #2d3436; margin-bottom: 5px; font-size: 1.05rem;">👤 <span style="color: var(--primary-color);">${order.customerName || 'Chưa cung cấp Tên'}</span></div>
+                <div style="font-size: 0.9rem; color: #636e72; display: flex; align-items: flex-start; gap: 5px;">
+                    <span>📍</span>
+                    <span style="flex: 1; line-height: 1.4;">${order.customerAddress || 'Chưa cung cấp Địa chỉ'}</span>
+                </div>
+            </div>
             <div class="order-items">
                 ${itemsHtml}
                 ${deliveryTimeHtml}

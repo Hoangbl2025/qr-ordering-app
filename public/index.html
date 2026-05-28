@@ -14,6 +14,19 @@
             <p class="subtitle" id="table-display">Đang tải mã khách...</p>
         </header>
 
+        <!-- Form thông tin khách hàng -->
+        <div class="customer-info" style="padding: 15px 20px; background: white; margin: 0; border-bottom: 1px solid rgba(0,0,0,0.05);">
+            <div style="margin-bottom: 10px;">
+                <label for="customer-name" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--text-dark);">Tên Khách Hàng / Đại Lý <span style="color: red;">*</span></label>
+                <input type="text" id="customer-name" placeholder="VD: Tạp hóa Hà Anh" style="width: 100%; padding: 10px; border: 1px solid #dfe4ea; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none;">
+            </div>
+            <div>
+                <label for="customer-address" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--text-dark);">Địa chỉ Giao Hàng <span style="color: red;">*</span></label>
+                <input type="text" id="customer-address" placeholder="VD: 123 Lê Lợi, Phường Bến Thành, Q1" style="width: 100%; padding: 10px; border: 1px solid #dfe4ea; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none;">
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 8px; font-style: italic;">📌 Thông tin chỉ cần nhập 1 lần, máy sẽ tự động lưu lại cho các lần đặt hàng sau.</p>
+        </div>
+
         <!-- Tabs Danh Mục -->
         <div class="category-tabs" id="category-tabs">
             <button class="tab-btn active" data-category="all">Tất cả</button>
