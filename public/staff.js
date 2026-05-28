@@ -6,6 +6,16 @@ socket.on('connect', () => {
 });
 
 let orders = [];
+let activeOrderId = null; // Lưu ID đơn hàng đang được Sale xác nhận để báo giờ giao
+
+// Fetch initial orders from server
+fetch('/api/orders')
+    .then(res => res.json())
+    .then(data => {
+        orders = data;
+        renderOrders();
+    })
+    .catch(err => console.error('Error fetching orders:', err));
 
 const formatMoney = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -31,10 +41,21 @@ const renderOrders = () => {
     orders.forEach(order => {
         let itemsHtml = order.items.map(item => `
             <div class="order-item-row">
-                <span><b>${item.qty}x</b> ${item.name}</span>
+                <span><b>${item.qty}x</b> ${item.name} <small style="color: #888;">(${item.unit})</small></span>
                 <span>${formatMoney(item.price * item.qty)}</span>
             </div>
         `).join('');
+
+        // Hiển thị thêm thông tin thời gian giao dự kiến nếu có
+        let deliveryTimeHtml = '';
+        if (order.deliveryTime) {
+            deliveryTimeHtml = `
+                <div class="order-item-row" style="margin-top: 5px; color: #e67e22; font-size: 0.85rem; font-weight: 600;">
+                    <span>📅 Dự kiến giao:</span>
+                    <span>${order.deliveryTime}</span>
+                </div>
+            `;
+        }
 
         const orderEl = document.createElement('div');
         orderEl.className = 'order-card';
@@ -48,15 +69,16 @@ const renderOrders = () => {
             </div>
             <div class="order-items">
                 ${itemsHtml}
+                ${deliveryTimeHtml}
                 <div class="order-item-row" style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
                     <b>Tổng cộng:</b>
                     <b style="color: var(--primary-color);">${formatMoney(order.total)}</b>
                 </div>
             </div>
             <div class="status-actions">
-                ${order.status === 'pending' ? `<button class="status-btn btn-preparing" onclick="updateOrderStatus('${order.id}', 'preparing')">Bắt đầu làm</button>` : ''}
-                ${order.status === 'preparing' ? `<button class="status-btn btn-done" onclick="completeOrder('${order.id}')">Xong (READY)</button>` : ''}
-                ${order.status === 'READY' ? `<button class="status-btn" style="background: #ccc;" disabled>Đã giao & Chờ TT</button>` : ''}
+                ${order.status === 'pending' ? `<button class="status-btn btn-preparing" onclick="openDeliveryModal('${order.id}')">Xác nhận đơn & Báo giờ giao</button>` : ''}
+                ${order.status === 'preparing' ? `<button class="status-btn btn-done" onclick="completeOrder('${order.id}')">Đã giao hàng (READY)</button>` : ''}
+                ${order.status === 'READY' ? `<button class="status-btn" style="background: #ccc; cursor: not-allowed;" disabled>Hoàn thành (Đã giao & TT)</button>` : ''}
             </div>
         `;
         container.appendChild(orderEl);
@@ -66,7 +88,7 @@ const renderOrders = () => {
 const getStatusText = (status) => {
     switch(status) {
         case 'pending': return 'Mới';
-        case 'preparing': return 'Đang làm';
+        case 'preparing': return 'Chuẩn bị giao';
         case 'READY': return 'Đã xong';
         default: return 'Không rõ';
     }
@@ -75,23 +97,59 @@ const getStatusText = (status) => {
 // Lắng nghe đơn hàng mới
 socket.on('receive-new-order', (orderData) => {
     console.log('Đơn hàng mới nhận được:', orderData);
-    // Thêm vào đầu danh sách
     orders.unshift(orderData);
-    renderOrders(); // Hàm hiển thị đơn hàng lên màn hình
-    playNotificationSound(); // Phát tiếng chuông báo đơn mới
+    renderOrders();
+    playNotificationSound();
     showToast(`Có đơn hàng mới từ ${orderData.tableName}!`);
 });
 
-window.updateOrderStatus = (orderId, newStatus) => {
+// Modal điều khiển thời gian giao hàng
+window.openDeliveryModal = (orderId) => {
+    activeOrderId = orderId;
+    document.getElementById('custom-time-input').value = '';
+    document.getElementById('delivery-modal').style.display = 'flex';
+};
+
+window.closeDeliveryModal = () => {
+    document.getElementById('delivery-modal').style.display = 'none';
+    activeOrderId = null;
+};
+
+// Xác nhận thời gian giao hàng (khi click nút có sẵn)
+window.confirmDeliveryTime = (deliveryTime) => {
+    if (activeOrderId) {
+        updateOrderStatus(activeOrderId, 'preparing', deliveryTime);
+        closeDeliveryModal();
+    }
+};
+
+// Xác nhận thời gian giao hàng tự nhập
+window.submitCustomDeliveryTime = () => {
+    const inputVal = document.getElementById('custom-time-input').value.trim();
+    if (!inputVal) {
+        alert('Vui lòng nhập thời gian giao dự kiến!');
+        return;
+    }
+    if (activeOrderId) {
+        updateOrderStatus(activeOrderId, 'preparing', inputVal);
+        closeDeliveryModal();
+    }
+};
+
+window.updateOrderStatus = (orderId, newStatus, deliveryTime = null) => {
     const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex > -1) {
         orders[orderIndex].status = newStatus;
+        if (deliveryTime) {
+            orders[orderIndex].deliveryTime = deliveryTime;
+        }
         
-        // Gửi thông báo cập nhật lên server
+        // Gửi thông báo cập nhật lên server, truyền kèm deliveryTime
         socket.emit('update-status', {
             customerSocketId: orders[orderIndex].customerSocketId,
             orderId: orderId,
-            status: newStatus
+            status: newStatus,
+            deliveryTime: deliveryTime
         });
 
         renderOrders();
@@ -106,7 +164,8 @@ window.completeOrder = (orderId) => {
         socket.emit('update-status', {
             customerSocketId: orders[orderIndex].customerSocketId,
             orderId: orderId,
-            status: "READY"
+            status: "READY",
+            deliveryTime: orders[orderIndex].deliveryTime // Giữ nguyên thời gian giao đã báo
         });
 
         renderOrders();

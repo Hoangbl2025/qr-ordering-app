@@ -10,8 +10,8 @@
 <body style="align-items: flex-start; padding-top: 40px;">
     <div class="container staff-container">
         <header>
-            <h1>Hệ Thống Nhận Đơn</h1>
-            <p class="subtitle">Dành cho bộ phận Pha Chế / Nhà Bếp</p>
+            <h1>Hệ Thống Nhận Đơn (Sale)</h1>
+            <p class="subtitle">Dành cho bộ phận Sale / Xác nhận & giao hàng</p>
         </header>
 
         <div class="order-list" id="order-list">
@@ -19,6 +19,29 @@
             <div style="text-align: center; color: #999; padding: 40px;">
                 Chưa có đơn hàng nào.
             </div>
+        </div>
+    </div>
+
+    <!-- Modal chọn thời gian giao dự kiến -->
+    <div id="delivery-modal" class="delivery-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 15px;">
+        <div class="modal-content" style="background: white; padding: 25px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <h3 style="margin-bottom: 10px; font-weight: 700;">Thời Gian Giao Dự Kiến</h3>
+            <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 15px;">Chọn hoặc nhập thời gian để thông báo cho khách hàng:</p>
+            
+            <div class="delivery-options" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                <button class="opt-btn" onclick="confirmDeliveryTime('30 phút')">⚡ 30 phút</button>
+                <button class="opt-btn" onclick="confirmDeliveryTime('1 giờ')">🕒 1 giờ</button>
+                <button class="opt-btn" onclick="confirmDeliveryTime('2 giờ')">🚚 2 giờ</button>
+                <button class="opt-btn" onclick="confirmDeliveryTime('Trong ngày')">📅 Trong ngày</button>
+                <button class="opt-btn" onclick="confirmDeliveryTime('Ngày mai')">🗓️ Ngày mai</button>
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                <input type="text" id="custom-time-input" placeholder="Nhập tự do..." style="flex: 1; padding: 10px; border: 1px solid #dfe4ea; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none;">
+                <button onclick="submitCustomDeliveryTime()" style="background: var(--primary-color); padding: 10px 15px;">Gửi</button>
+            </div>
+            
+            <button onclick="closeDeliveryModal()" style="width: 100%; background: #f1f2f6; color: var(--text-dark); border: 1px solid #dfe4ea;">Hủy bỏ</button>
         </div>
     </div>
 

@@ -10,9 +10,17 @@
 <body>
     <div class="container">
         <header>
-            <h1>Menu Của Quán</h1>
-            <p class="subtitle" id="table-display">Đang tải bàn...</p>
+            <h1>Đặt Hàng Giấy Thanh Hà</h1>
+            <p class="subtitle" id="table-display">Đang tải mã khách...</p>
         </header>
+
+        <!-- Tabs Danh Mục -->
+        <div class="category-tabs" id="category-tabs">
+            <button class="tab-btn active" data-category="all">Tất cả</button>
+            <button class="tab-btn" data-category="giay-ve-sinh">Giấy Vệ Sinh</button>
+            <button class="tab-btn" data-category="khan-giay-rut">Khăn Giấy Rút</button>
+            <button class="tab-btn" data-category="giay-pho-khac">Giấy Phở / Khác</button>
+        </div>
 
         <div class="menu-list" id="menu-list">
             <!-- Món ăn sẽ được render ở đây -->
@@ -31,11 +39,34 @@
             <div class="status-icon" id="status-icon">🕒</div>
             <div class="status-text" id="status-text">Đã gửi đơn hàng</div>
             <div class="status-subtext" id="status-subtext">Vui lòng đợi trong giây lát...</div>
+            
+            <!-- Báo thời gian giao dự kiến -->
+            <div class="delivery-time-container" id="delivery-time-container" style="display: none; margin-top: 15px; padding: 12px 20px; background: rgba(255, 107, 107, 0.1); border-radius: 12px; border: 1px solid rgba(255, 107, 107, 0.2);">
+                <span style="font-size: 1.2rem; margin-right: 5px;">📅</span>
+                <span style="font-weight: 600;">Dự kiến giao: </span>
+                <span id="delivery-time-val" style="color: var(--primary-color); font-weight: 700;">--</span>
+            </div>
+
+            <!-- Lựa chọn phương thức thanh toán -->
+            <div id="payment-options" style="display: none; margin-top: 20px; width: 100%; max-width: 300px;">
+                <p style="font-weight: bold; margin-bottom: 15px;">Chọn phương thức thanh toán</p>
+                <button id="btn-pay-cash" style="width: 100%; margin-bottom: 10px; background: #2ecc71;">💵 Thanh toán Tiền mặt</button>
+                <button id="btn-pay-transfer" style="width: 100%; background: #3498db;">🏦 Chuyển khoản QR</button>
+            </div>
+
             <div id="qr-container" style="display: none; margin-top: 20px;">
                 <p style="font-weight: bold; margin-bottom: 10px;">Quét mã VietQR để thanh toán</p>
                 <img id="vietqr-img" src="" alt="VietQR" style="width: 200px; height: 200px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <p style="font-size: 0.85rem; color: #666; margin-top: 10px; line-height: 1.5;">Ngân hàng: <b>BIDV</b><br>Số TK: <b>8618937888</b><br>Chủ TK: CONG TY TNHH THANH PHAT LD</p>
             </div>
-            <button style="margin-top: 30px; display: none;" id="new-order-btn">Đặt món khác</button>
+            
+            <div id="cash-container" style="display: none; margin-top: 20px; background: rgba(46, 204, 113, 0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(46, 204, 113, 0.3);">
+                <span style="font-size: 2.5rem;">💵</span>
+                <p style="font-weight: bold; color: #27ae60; margin-top: 10px; font-size: 1.1rem;">Bạn đã chọn Tiền mặt</p>
+                <p style="font-size: 0.9rem; color: #555; margin-top: 5px;">Vui lòng chuẩn bị sẵn tiền mặt để gửi cho nhân viên khi nhận hàng nhé!</p>
+            </div>
+
+            <button style="margin-top: 30px; display: none;" id="new-order-btn">Đặt đơn hàng khác</button>
         </div>
     </div>
 
