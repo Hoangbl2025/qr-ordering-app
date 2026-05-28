@@ -39,6 +39,17 @@ app.get('/api/orders', (req, res) => {
   res.json(currentOrders);
 });
 
+// API lấy đơn hàng đang hoạt động của 1 khách hàng (để tự động khôi phục giao diện)
+app.get('/api/active-order/:code', (req, res) => {
+  const code = req.params.code;
+  const activeOrder = currentOrders.find(o => o.customerCode === code && !o.dismissed);
+  if (activeOrder) {
+    res.json({ success: true, order: activeOrder });
+  } else {
+    res.json({ success: false });
+  }
+});
+
 io.on('connection', (socket) => {
   console.log('Có người kết nối:', socket.id);
 
@@ -64,7 +75,8 @@ io.on('connection', (socket) => {
       timestamp: new Date().toLocaleTimeString(),
       status: 'pending', // pending, preparing, done
       customerName: cInfo.name,
-      customerAddress: cInfo.address
+      customerAddress: cInfo.address,
+      dismissed: false // Cờ đánh dấu khách đã bấm hoàn tất đơn
     };
 
     // Lưu vào bộ nhớ tạm
@@ -92,22 +104,41 @@ io.on('connection', (socket) => {
   });
 
   // 3. Lắng nghe cập nhật trạng thái từ Sale
-  socket.on('update-status', (statusUpdate) => {
-    // statusUpdate = { customerSocketId, orderId, status, deliveryTime }
-    console.log('Cập nhật trạng thái:', statusUpdate);
-    
-    // Cập nhật trạng thái và thời gian giao trong mảng lưu trữ
-    const orderIndex = currentOrders.findIndex(o => o.id === statusUpdate.orderId);
+  socket.on('update-status', (data) => {
+    // Cập nhật trạng thái trong bộ nhớ
+    const orderIndex = currentOrders.findIndex(o => o.id === data.orderId);
     if (orderIndex > -1) {
-      currentOrders[orderIndex].status = statusUpdate.status;
-      if (statusUpdate.deliveryTime) {
-        currentOrders[orderIndex].deliveryTime = statusUpdate.deliveryTime;
+      currentOrders[orderIndex].status = data.status;
+      if (data.deliveryTime) {
+          currentOrders[orderIndex].deliveryTime = data.deliveryTime;
       }
-    }
 
-    // Gửi thông báo lại cho khách hàng cụ thể dựa trên Socket ID
-    if (statusUpdate.customerSocketId) {
-       io.to(statusUpdate.customerSocketId).emit('order-status-changed', statusUpdate);
+      // Lấy socketId MỚI NHẤT của khách hàng từ máy chủ
+      const currentSocketId = currentOrders[orderIndex].customerSocketId;
+
+      io.to(currentSocketId).emit('order-status-updated', {
+        orderId: data.orderId,
+        status: data.status,
+        deliveryTime: data.deliveryTime
+      });
+    }
+  });
+
+  // Lắng nghe khi khách hàng F5 hoặc load lại trang
+  socket.on('register-customer', (customerCode) => {
+    const activeOrder = currentOrders.find(o => o.customerCode === customerCode && !o.dismissed);
+    if (activeOrder) {
+      activeOrder.customerSocketId = socket.id; // Cập nhật lại đường dây liên lạc
+      console.log(`Đã kết nối lại khách hàng ${customerCode} với đơn hàng ${activeOrder.id}`);
+    }
+  });
+
+  // Khách hàng bấm Hoàn tất & Đặt đơn mới
+  socket.on('dismiss-order', (customerCode) => {
+    const activeOrder = currentOrders.find(o => o.customerCode === customerCode && !o.dismissed);
+    if (activeOrder) {
+      activeOrder.dismissed = true;
+      console.log(`Khách hàng ${customerCode} đã đóng đơn hàng ${activeOrder.id}`);
     }
   });
 });

@@ -8,6 +8,19 @@ const formattedCustomerName = `Giấy Thanh Hà - ${customerCode}`;
 
 document.getElementById('table-display').innerText = formattedCustomerName;
 
+// Khôi phục đơn hàng đang hoạt động (nếu có)
+fetch(`/api/active-order/${customerCode}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.order) {
+            currentOrderTotal = data.order.total;
+            showStatusOverlay(data.order.status, data.order.deliveryTime);
+            // Thông báo cho máy chủ cập nhật lại kết nối (Socket ID) cho đơn hàng này
+            socket.emit('register-customer', customerCode);
+        }
+    })
+    .catch(err => console.error('Lỗi khi khôi phục đơn hàng:', err));
+
 // Danh sách 20 sản phẩm thực tế từ bảng báo giá Giấy Thanh Hà
 const menuData = [
     { id: 'sp1', name: "Giấy vệ sinh Thanh Hà 20 cuộn", price: 530000, category: 'giay-ve-sinh', unit: 'Cây', note: '10 xách/Cây (20 cuộn 1 xách)', image: 'images/sp1.png' },
@@ -216,6 +229,9 @@ document.getElementById('new-order-btn').addEventListener('click', () => {
     renderMenu();
     updateCartSummary();
     document.getElementById('status-overlay').classList.remove('active');
+    
+    // Báo cho máy chủ biết khách đã hoàn tất quy trình theo dõi đơn hàng này
+    socket.emit('dismiss-order', customerCode);
 });
 
 // Sự kiện khi khách chọn thanh toán Tiền mặt
