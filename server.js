@@ -5,7 +5,6 @@ const path = require('path');
 const axios = require('axios');
 const fs = require('fs');
 
-const GOOGLE_SHEET_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxEUUob8FlRZuV35wUSkwpo1s7-YFovIJxQbZEZPEP-ZmZW7ok1YO8KPECEjGlSkO1kUA/exec';
 
 // Đọc danh sách khách hàng từ file
 let customersData = {};
@@ -82,22 +81,25 @@ io.on('connection', (socket) => {
     // Lưu vào bộ nhớ tạm
     currentOrders.unshift(enrichedOrderData);
 
-    // Gửi lên Google Sheet
+    // Gửi lên Google Form
     const itemsString = enrichedOrderData.items.map(i => `${i.qty}x ${i.name}`).join(', ');
-    const sheetData = {
-      orderId: enrichedOrderData.id,
-      tableName: enrichedOrderData.tableName,
-      customerName: enrichedOrderData.customerName,
-      customerAddress: enrichedOrderData.customerAddress,
-      itemsString: itemsString,
-      total: enrichedOrderData.total,
-      timestamp: enrichedOrderData.timestamp,
-      status: enrichedOrderData.status
-    };
     
-    axios.post(GOOGLE_SHEET_WEBHOOK, sheetData)
-      .then(res => console.log('Đã lưu đơn hàng lên Google Sheet thành công!'))
-      .catch(err => console.error('Lỗi lưu đơn lên Google Sheet:', err.message));
+    // Cấu hình ID các trường của Google Form mới
+    const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdzegmy1nPDakr8DbX1TYFiEVOjjLkchu0wYpKVk9NSMrZKQg/formResponse';
+    const formData = new URLSearchParams();
+    formData.append('entry.1221722327', enrichedOrderData.customerCode); // Mã KH
+    formData.append('entry.1691237577', itemsString); // Mô tả đơn hàng
+    formData.append('entry.351321341', enrichedOrderData.total.toString()); // Tổng Tiền
+    formData.append('entry.811081803', 'Chưa thanh toán'); // Phương Thức Thanh Toán
+    formData.append('entry.772978177', enrichedOrderData.timestamp); // Thời Gian
+
+    axios.post(formUrl, formData.toString(), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .then(res => console.log('Đã lưu đơn hàng lên Google Form thành công!'))
+    .catch(err => console.error('Lỗi lưu đơn lên Google Form:', err.message));
 
     // Gửi đơn hàng này tới TẤT CẢ nhân viên trong phòng pha chế
     io.to('barista-room').emit('receive-new-order', enrichedOrderData);
